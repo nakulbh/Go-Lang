@@ -10,7 +10,7 @@ import (
 
 func main() {
 	r := httprouter.New()
-	uc := controllers.NewUserControllers(getSession)
+	uc := controllers.NewUserControllers(getSession())
 	r.GET("/user/:id", uc.GetUser)
 	r.POST("/user", uc.CreateUser)
 	r.DELETE("/user/:id", uc.DeleteUser)
@@ -18,11 +18,11 @@ func main() {
 
 }
 
-// this function helps cpnnect to mongodb
+// this function helps cpnnect to mongodb this retunrs a session(s)
 func getSession() *mgo.Session {
-	s, err := mgo.Dial("mongodb://localhost:27017")
+	session, err := mgo.Dial("mongodb://localhost:27017")
 	if err != nil {
 		panic(err)
 	}
-	return s
+	return session
 }

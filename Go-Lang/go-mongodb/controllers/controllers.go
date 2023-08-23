@@ -1,4 +1,4 @@
-package main
+package controllers
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ type UserControllers struct {
 }
 
 func NewUserControllers(s *mgo.Session) *UserControllers {
-	return &UserControllers{s}
+	return &UserControllers{session: s}
 }
 
 func (uc UserControllers) GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -32,13 +32,13 @@ func (uc UserControllers) GetUser(w http.ResponseWriter, r *http.Request, p http
 	/*     uc.Session accesses the MongoDB session.
 	.DB("mongo-golang") specifies that you want to work with the database named "mongo-golang". It's like selecting a database in MongoDB.*/
 
-	if err := uc.Session.DB("mongo-golang").C("users").FindID(oid).One(&u); err != nill {
+	if err := uc.session.DB("mongo-golang").C("users").FindId(oid).One(&u); err != nil {
 		w.WriteHeader(404)
 		return
 	}
 
 	uj, err := json.Marshal(u)
-	if err != nill {
+	if err != nil {
 		fmt.Println(err)
 	}
 
@@ -54,14 +54,31 @@ func (uc UserControllers) CreateUser(w http.ResponseWriter, r *http.Request, _ h
 
 	u.Id = bson.NewObjectId()
 
-	uc.Session.DB("mongo-golang").C("users").Insert(u)
+	uc.session.DB("mongo-golang").C("users").Insert(u)
 
 	uj, err := json.Marshal(u)
-	if err != nill {
+	if err != nil {
 		fmt.Println(err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "%s\n", u)
+	fmt.Fprintf(w, "%s\n", uj)
+}
+
+func (uc UserControllers) DeleteUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	id := p.ByName("id")
+	if !bson.IsObjectIdHex(id) {
+		w.WriteHeader(404)
+		return
+	}
+
+	oid := bson.ObjectIdHex(id)
+
+	if err := uc.session.DB("mongo-golang").C("users").RemoveId(id); err != nil {
+		w.WriteHeader(404)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "Deleted user", oid, "\n")
 }

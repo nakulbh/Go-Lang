@@ -20,9 +20,9 @@ func main() {
 
 // this function helps cpnnect to mongodb this retunrs a session(s)
 func getSession() *mgo.Session {
-	session, err := mgo.Dial("mongodb://localhost:27017")
+	s, err := mgo.Dial("mongodb://localhost:27017")
 	if err != nil {
 		panic(err)
 	}
-	return session
+	return s
 }

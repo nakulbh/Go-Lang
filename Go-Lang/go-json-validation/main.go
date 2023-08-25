@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -81,5 +82,24 @@ func ValidateBook(c *gin.Context) {
 	}
 
 	bookType := reflect.TypeOf(Book{})
+	validField := make(map[string]bool)
+
+	for i := 0; i < bookType.NumField(); i++ {
+		field := bookType.Field(i)
+		validField[field.Tag.Get("json")] = true
+	}
+
+	for key := range receivedData {
+		if !validField[key] {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Invalid field: %s", key),
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "JSON structure matches Book struct",
+	})
 
 }

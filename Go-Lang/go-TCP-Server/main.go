@@ -28,7 +28,7 @@ func main() {
 	fmt.Println("Server listening on", listen.Addr())
 
 	for {
-		conn, err := listen.Accept()
+		connection, err := listen.Accept()
 		/*
 			conn, err := listener.Accept(): This line of code attempts to accept an incoming connection.
 			 The Accept() method of the listener waits until a connection request arrives.
@@ -39,7 +39,7 @@ func main() {
 			log.Fatal(err)
 			os.Exit(1)
 		}
-		go handleRequest(conn)
+		go handleRequest(connection)
 	}
 
 }
@@ -53,8 +53,16 @@ func handleRequest(conn net.Conn) {
 	}
 
 	// write data to response
-	time := time.Now().Format(time.ANSIC)
-	responseStr := fmt.Sprintf("Your message is: %v. Received time: %v", string(buffer[:]), time)
+	currentime := time.Now().Format(time.ANSIC)
+	/*
+		timr.Now returns the time.Time object which have the current time
+		then it is passed to .Format(time.ANSIC)
+		time.ANSIC is a predefined constant in the time package that represents a standard format for displaying dates and times.
+		 It has a format like this: "Mon Jan _2 15:04:05 2006".
+		  The values in this format string are placeholders that get replaced with the actual date and time components when the Format method is called.
+
+	*/
+	responseStr := fmt.Sprintf("Your message is: %v. Received time: %v", string(buffer[:]), currentime)
 	conn.Write([]byte(responseStr))
 
 	// close conn

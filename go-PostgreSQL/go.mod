@@ -1,4 +1,4 @@
-module github.com/Go-Lang/Go-Lang/go-PostgreSQL
+module github.com/Go-Lang/go-PostgreSQL
 
 go 1.18
 

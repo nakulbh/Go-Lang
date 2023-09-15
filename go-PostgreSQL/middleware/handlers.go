@@ -58,10 +58,6 @@ func CreateStock(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func insertStock() int64 {
-
-}
-
 func GetStock(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -131,5 +127,38 @@ func DeleteStock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(res)
+
+}
+
+//the below functoin the toose which will work with databases
+
+func insertStock(stock models.Stock) int64 {
+	db := CreateConnection()
+	defer db.Close()
+	sqlStatement := `INSERT INTO stocks(name, price, company) VALUES ($1, $2, $3) RETURNING stocksid`
+	var id int64
+
+	err := db.QueryRow(sqlStatement, stock.Name, stock.Price, stock.Company).Scan(&id)
+	if err != nil {
+		log.Fatal("Unable to execute the query. %v", err)
+	}
+
+	return id
+
+}
+
+func getstock(id int64) (models.Stock, error) {
+
+}
+
+func getAllStock() ([]models.Stock, error) {
+
+}
+
+func updateStock(id int64, stoc models.Stock) int64 {
+
+}
+
+func deleteStock(id int64) int64 {
 
 }

@@ -147,18 +147,114 @@ func insertStock(stock models.Stock) int64 {
 
 }
 
+// here id is the parameter and model.stocks is the return type
 func getstock(id int64) (models.Stock, error) {
+	db := CreateConnection()
+	defer db.Close()
+	var stock models.Stock
+
+	sqlStatement := `SELECT * FROM stocks WHERE stockid=$1`
+
+	row := db.QueryRow(sqlStatement, id)
+
+	err := row.Scan(&stock.StockID, &stock.Name, &stock.Price, &stock.Company)
+
+	switch err {
+	case sql.ErrNoRows:
+		fmt.Println("Now rows were returned!")
+		return stock, nil
+
+	case nil:
+		return stock, nil
+
+	default:
+		log.Fatal("Unable to scan the row. %v", err)
+
+	}
+	return stock, err
 
 }
 
 func getAllStock() ([]models.Stock, error) {
+	db := CreateConnection()
+	defer db.Close()
+
+	var stocks []models.Stock
+	sqlStatement := `SELECT * FROM stocks`
+	rows, err := db.Query(sqlStatement)
+	if err != nil {
+		log.Fatalf("Unable to execute the quesry.%v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var stock models.Stock
+		err = rows.Scan(&stock.StockID, &stock.Name, &stock.Price, &stock.Company)
+		if err != nil {
+			log.Fatalf("unable to scan the row %v", err)
+		}
+		stocks = append(stocks, stock)
+	}
+
+	return stocks, err
 
 }
 
-func updateStock(id int64, stoc models.Stock) int64 {
+func updateStock(id int64, stock models.Stock) int64 {
+	db := CreateConnection()
+
+	// close the db connection
+	defer db.Close()
+
+	// create the update sql query
+	sqlStatement := `UPDATE stocks SET name=$2, price=$3, company=$4 WHERE stockid=$1`
+
+	// execute the sql statement
+	res, err := db.Exec(sqlStatement, id, stock.Name, stock.Price, stock.Company)
+
+	if err != nil {
+		log.Fatalf("Unable to execute the query. %v", err)
+	}
+
+	// check how many rows affected
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Fatalf("Error while checking the affected rows. %v", err)
+	}
+
+	fmt.Printf("Total rows/record affected %v", rowsAffected)
+
+	return rowsAffected
 
 }
 
 func deleteStock(id int64) int64 {
+	// create the postgres db connection
+	db := CreateConnection()
+
+	// close the db connection
+	defer db.Close()
+
+	// create the delete sql query
+	sqlStatement := `DELETE FROM stocks WHERE stockid=$1`
+
+	// execute the sql statement
+	res, err := db.Exec(sqlStatement, id)
+
+	if err != nil {
+		log.Fatalf("Unable to execute the query. %v", err)
+	}
+
+	// check how many rows affected
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Fatalf("Error while checking the affected rows. %v", err)
+	}
+
+	fmt.Printf("Total rows/record affected %v", rowsAffected)
+
+	return rowsAffected
 
 }

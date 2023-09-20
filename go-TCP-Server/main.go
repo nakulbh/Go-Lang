@@ -1,70 +1,50 @@
 package main
 
 import (
+	"bufio"
+	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
-	"os"
-	"time"
-)
-
-const (
-	HOST = "localhost"
-	PORT = "8080"
-	TYPE = "tcp"
+	"strings"
 )
 
 func main() {
-	listen, err := net.Listen(TYPE, HOST+":"+PORT)
-	/*
-		The net.Listen function returns a Listener object (an interface) and an error.
-		 The Listener interface provides methods to accept incoming connections.
-	*/
+	const name = "tcpupperecho"
+	log.SetPrefix(name + "\t")
+
+	port := flag.Int("p", 8080, "port to listen on")
+	flag.Parse()
+
+	listener, err := net.ListenTCP("tcp", &net.TCPAddr{Port: *port})
 	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+		panic(err)
 	}
-	defer listen.Close()
-	fmt.Println("Server listening on", listen.Addr())
+	defer listener.Close()
+	log.Printf("listening at localhost: %s", listener.Addr())
 
 	for {
-		connection, err := listen.Accept()
-		/*
-			conn, err := listener.Accept(): This line of code attempts to accept an incoming connection.
-			 The Accept() method of the listener waits until a connection request arrives.
-			  When a connection is established, it returns a net.Conn object representing that connection and a potential error.
-			   If there's an error while accepting the connection, it's captured in the err variable.
-		*/
+
+		conn, err := listener.Accept()
 		if err != nil {
-			log.Fatal(err)
-			os.Exit(1)
+			panic(err)
 		}
-		go handleRequest(connection)
+
+		go echoUpper(conn, conn)
 	}
 
 }
 
-func handleRequest(conn net.Conn) {
-	// incoming request
-	buffer := make([]byte, 1024)
-	_, err := conn.Read(buffer)
-	if err != nil {
-		log.Fatal(err)
+func echoUpper(w io.Writer, r io.Reader) {
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := scanner.Text()
+		// note that scanner.Text() strips the newline character from the end of the line,
+		// so we need to add it back in when we write to w.
+		fmt.Fprintf(w, "%s\n", strings.ToUpper(line))
 	}
-
-	// write data to response
-	currentime := time.Now().Format(time.ANSIC)
-	/*
-		timr.Now returns the time.Time object which have the current time
-		then it is passed to .Format(time.ANSIC)
-		time.ANSIC is a predefined constant in the time package that represents a standard format for displaying dates and times.
-		 It has a format like this: "Mon Jan _2 15:04:05 2006".
-		  The values in this format string are placeholders that get replaced with the actual date and time components when the Format method is called.
-
-	*/
-	responseStr := fmt.Sprintf("Your message is: %v. Received time: %v", string(buffer[:]), currentime)
-	conn.Write([]byte(responseStr))
-
-	// close conn
-	conn.Close()
+	if err := scanner.Err(); err != nil {
+		log.Printf("error: %s", err)
+	}
 }
